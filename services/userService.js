@@ -32,10 +32,9 @@ function login(req, res, next) {
     let { username, password } = req.body;
     // md5加密
     password = md5(password); 
-    const query = `select * from sys_user where username='${username}' and password='${password}'`;
+    const query = `select * from sys_user where username='${username}' or mobile='${username}' and password='${password}'`;
     querySql(query)
     .then(user => {
-    	// console.log('用户登录===', user);
       if (!user || user.length === 0) {
         res.json({ 
         	code: CODE_ERROR, 
@@ -57,6 +56,8 @@ function login(req, res, next) {
           id: user[0].id,
           username: user[0].username,
           nickname: user[0].nickname,
+          mobile: user[0].mobile,
+          email: user[0].email,
           avator: user[0].avator,
           sex: user[0].sex,
           gmt_create: user[0].gmt_create,
@@ -84,7 +85,7 @@ function register(req, res, next) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { username, password } = req.body;
+    let { username, password, email, mobile } = req.body;
     findUser(username)
   	.then(data => {
   		// console.log('用户注册===', data);
@@ -95,11 +96,10 @@ function register(req, res, next) {
 	      	data: null 
 	      })
   		} else {
-	    	password = md5(password);
-  			const query = `insert into sys_user(username, password) values('${username}', '${password}')`;
+        password = md5(password);
+  			const query = `insert into sys_user(username, password, email, mobile) values('${username}', '${password}', '${email}', '${mobile}')`;
   			querySql(query)
 		    .then(result => {
-		    	// console.log('用户注册===', result);
 		      if (!result || result.length === 0) {
 		        res.json({ 
 		        	code: CODE_ERROR, 
@@ -110,29 +110,9 @@ function register(req, res, next) {
             const queryUser = `select * from sys_user where username='${username}' and password='${password}'`;
             querySql(queryUser)
             .then(user => {
-              const token = jwt.sign(
-                { username },
-                PRIVATE_KEY,
-                { expiresIn: JWT_EXPIRED }
-              )
-
-              let userData = {
-                id: user[0].id,
-                username: user[0].username,
-                nickname: user[0].nickname,
-                avator: user[0].avator,
-                sex: user[0].sex,
-                gmt_create: user[0].gmt_create,
-                gmt_modify: user[0].gmt_modify
-              };
-
               res.json({ 
                 code: CODE_SUCCESS, 
-                msg: '注册成功', 
-                data: { 
-                  token,
-                  userData
-                } 
+                msg: '注册成功'
               })
             })
 		      }
@@ -207,8 +187,23 @@ function findUser(username) {
   return queryOne(query);
 }
 
+// 获取用户路由信息
+function getRouteInfo(req, res, next) {
+  const err = validationResult(req);
+  // 如果验证错误，empty不为空
+  if (!err.isEmpty()) {
+    // 获取错误信息
+    const [{ msg }] = err.errors;
+    // 抛出错误，交给我们自定义的统一异常处理程序进行错误返回 
+    next(boom.badRequest(msg));
+  } else {
+    let { id } = req.body;
+    const query = `select * from sys_user where username='${username}' or mobile='${username}' and password='${password}'`;
+  }
+}
 module.exports = {
   login,
   register,
-  resetPwd
+  resetPwd,
+  getRouteInfo
 }

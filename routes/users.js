@@ -24,13 +24,16 @@ const resetPwdVaildator = [
 ]
 
 // 用户登录路由
-router.post('/login', vaildator, service.login);
+router.post('/login', service.login);
 
 // 用户注册路由
-router.post('/register', vaildator, service.register);
+router.post('/register', service.register);
 
 // 密码重置路由
 router.post('/resetPwd', resetPwdVaildator, service.resetPwd);
+
+// 获取用户路由信息
+router.post('/getRouteInfo', service.getRouteInfo);
 
 
 module.exports = router;
