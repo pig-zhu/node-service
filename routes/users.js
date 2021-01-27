@@ -30,10 +30,10 @@ router.post('/login', service.login);
 router.post('/register', service.register);
 
 // 密码重置路由
-router.post('/resetPwd', resetPwdVaildator, service.resetPwd);
+router.post('/updatePassword', service.updatePassword);
 
-// 获取用户路由信息
-router.post('/getRouteInfo', service.getRouteInfo);
+// 修改用户信息
+router.post('/updateUserInfo', service.updateUserInfo);
 
 
 module.exports = router;

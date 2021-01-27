@@ -16,8 +16,8 @@ const jwtAuth = expressJwt({
   credentialsRequired: true,
   // 自定义获取token的函数
   getToken: (req) => {
-    if (req.headers.authorization) {
-      return req.headers.authorization
+    if (req.headers['access-token']) {
+      return req.headers['access-token']
     } else if (req.query && req.query.token) {
       return req.query.token
     }
@@ -28,13 +28,13 @@ const jwtAuth = expressJwt({
     '/',
     '/api/login',
     '/api/register',
-    '/api/resetPwd'
+    '/api/updatePassword'
   ]
 })
 
 // jwt-token解析
 function decode(req) {
-  const token = req.get('Authorization')
+  const token = req.get('access-token')
   return jwt.verify(token, PRIVATE_KEY);
 }
 

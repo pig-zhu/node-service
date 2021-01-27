@@ -27,16 +27,14 @@ function queryTaskList(req, res, next) {
     // 抛出错误，交给我们自定义的统一异常处理程序进行错误返回 
     next(boom.badRequest(msg));
   } else {
-    let { pageSize, pageNo, status } = req.query;
+    let { id } = req.body;
     // 默认值
-    pageSize = pageSize ? pageSize : 1;
-    pageNo = pageNo ? pageNo : 1;
-    status = (status || status == 0) ? status : null;
-
-    let query = `select d.id, d.title, d.content, d.status, d.is_major, d.gmt_create, d.gmt_expire from sys_task d`;
+    // pageSize = pageSize ? pageSize : 1;
+    // pageNo = pageNo ? pageNo : 1;
+    // status = (status || status == 0) ? status : null;
+    let query = `select * from projects where leader = ${id}`;
     querySql(query)
     .then(data => {
-    	// console.log('任务列表查询===', data);
       if (!data || data.length === 0) {
         res.json({ 
         	code: CODE_ERROR, 
@@ -48,70 +46,80 @@ function queryTaskList(req, res, next) {
         // 计算数据总条数
         let total = data.length; 
         // 分页条件 (跳过多少条)
-        let n = (pageNo - 1) * pageSize;
+        // let n = (pageNo - 1) * pageSize;
+        res.json({ 
+          code: CODE_SUCCESS, 
+          msg: '查询数据成功', 
+          data: {
+            data: data,
+            total: total,
+            // pageNo: parseInt(pageNo),
+            // pageSize: parseInt(pageSize),
+          } 
+        })
         // 拼接分页的sql语句命令
-        if (status) {
-          let query_1 = `select d.id, d.title, d.content, d.status, d.is_major, d.gmt_create, d.gmt_expire from sys_task d where status='${status}' order by d.gmt_create desc`;
-          querySql(query_1)
-          .then(result_1 => {
-            console.log('分页1===', result_1);
-            if (!result_1 || result_1.length === 0) {
-              res.json({ 
-                code: CODE_SUCCESS, 
-                msg: '暂无数据', 
-                data: null 
-              })
-            } else {
-              let query_2 = query_1 + ` limit ${n} , ${pageSize}`;
-              querySql(query_2)
-              .then(result_2 => {
-                console.log('分页2===', result_2);
-                if (!result_2 || result_2.length === 0) {
-                  res.json({ 
-                    code: CODE_SUCCESS, 
-                    msg: '暂无数据', 
-                    data: null 
-                  })
-                } else {
-                  res.json({ 
-                    code: CODE_SUCCESS, 
-                    msg: '查询数据成功', 
-                    data: {
-                      rows: result_2,
-                      total: result_1.length,
-                      pageNo: parseInt(pageNo),
-                      pageSize: parseInt(pageSize),
-                    } 
-                  })
-                }
-              })
-            }
-          })
-        } else {
-          let query_3 = query + ` order by d.gmt_create desc limit ${n} , ${pageSize}`;
-          querySql(query_3)
-          .then(result_3 => {
-            console.log('分页2===', result_3);
-            if (!result_3 || result_3.length === 0) {
-              res.json({ 
-                code: CODE_SUCCESS, 
-                msg: '暂无数据', 
-                data: null 
-              })
-            } else {
-              res.json({ 
-                code: CODE_SUCCESS, 
-                msg: '查询数据成功', 
-                data: {
-                  rows: result_3,
-                  total: total,
-                  pageNo: parseInt(pageNo),
-                  pageSize: parseInt(pageSize),
-                } 
-              })
-            }
-          })
-        }
+        // if (status) {
+        //   let query_1 = `select d.id, d.title, d.content, d.status, d.is_major, d.gmt_create, d.gmt_expire from sys_task d where status='${status}' order by d.gmt_create desc`;
+        //   querySql(query_1)
+        //   .then(result_1 => {
+        //     console.log('分页1===', result_1);
+        //     if (!result_1 || result_1.length === 0) {
+        //       res.json({ 
+        //         code: CODE_SUCCESS, 
+        //         msg: '暂无数据', 
+        //         data: null 
+        //       })
+        //     } else {
+        //       let query_2 = query_1 + ` limit ${n} , ${pageSize}`;
+        //       querySql(query_2)
+        //       .then(result_2 => {
+        //         console.log('分页2===', result_2);
+        //         if (!result_2 || result_2.length === 0) {
+        //           res.json({ 
+        //             code: CODE_SUCCESS, 
+        //             msg: '暂无数据', 
+        //             data: null 
+        //           })
+        //         } else {
+        //           res.json({ 
+        //             code: CODE_SUCCESS, 
+        //             msg: '查询数据成功', 
+        //             data: {
+        //               rows: result_2,
+        //               total: result_1.length,
+        //               pageNo: parseInt(pageNo),
+        //               pageSize: parseInt(pageSize),
+        //             } 
+        //           })
+        //         }
+        //       })
+        //     }
+        //   })
+        // } else {
+        //   let query_3 = query + ` order by d.gmt_create desc limit ${n} , ${pageSize}`;
+        //   querySql(query_3)
+        //   .then(result_3 => {
+        //     console.log('分页2===', result_3);
+        //     if (!result_3 || result_3.length === 0) {
+        //       res.json({ 
+        //         code: CODE_SUCCESS, 
+        //         msg: '暂无数据', 
+        //         data: null 
+        //       })
+        //     } else {
+        //       res.json({ 
+        //         code: CODE_SUCCESS, 
+        //         msg: '查询数据成功', 
+        //         data: {
+        //           rows: result_3,
+        //           total: total,
+        //           pageNo: parseInt(pageNo),
+        //           pageSize: parseInt(pageSize),
+        //         } 
+        //       })
+        //     }
+        //   })
+        // }
       }
     })
   }

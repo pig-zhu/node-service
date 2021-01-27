@@ -9,8 +9,8 @@ const router = express.Router();
 const service = require('../services/taskService');
 
 
-// 任务清单接口
-router.get('/queryTaskList', service.queryTaskList);
+// 获取任务接口
+router.post('/queryTaskList', service.queryTaskList);
 
 // 添加任务接口
 router.post('/addTask', service.addTask);

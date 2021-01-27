@@ -31,7 +31,8 @@ function login(req, res, next) {
   } else {
     let { username, password } = req.body;
     // md5加密
-    password = md5(password); 
+    // password = md5(password); 
+    console.log(password,'login')
     const query = `select * from sys_user where username='${username}' or mobile='${username}' and password='${password}'`;
     querySql(query)
     .then(user => {
@@ -60,6 +61,7 @@ function login(req, res, next) {
           email: user[0].email,
           avator: user[0].avator,
           sex: user[0].sex,
+          bio:user[0].bio,
           gmt_create: user[0].gmt_create,
           gmt_modify: user[0].gmt_modify
         };
@@ -124,24 +126,21 @@ function register(req, res, next) {
 }
 
 // 重置密码
-function resetPwd(req, res, next) {
+function updatePassword(req, res, next) {
 	const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { username, oldPassword, newPassword } = req.body;
-    oldPassword = md5(oldPassword);
-    validateUser(username, oldPassword)
+    let { id, oldPassword, newPassword } = req.body;
+    validateUser(id, oldPassword)
     .then(data => {
-      console.log('校验用户名和密码===', data);
       if (data) {
         if (newPassword) {
           newPassword = md5(newPassword);
-				  const query = `update sys_user set password='${newPassword}' where username='${username}'`;
+				  const query = `update sys_user set password='${newPassword}' where id='${id}'`;
 				  querySql(query)
           .then(user => {
-            // console.log('密码重置===', user);
             if (!user || user.length === 0) {
               res.json({ 
                 code: CODE_ERROR, 
@@ -166,7 +165,7 @@ function resetPwd(req, res, next) {
       } else {
         res.json({ 
           code: CODE_ERROR, 
-          msg: '用户名或旧密码错误', 
+          msg: '旧密码错误', 
           data: null 
         })
       }
@@ -176,8 +175,8 @@ function resetPwd(req, res, next) {
 }
 
 // 校验用户名和密码
-function validateUser(username, oldPassword) {
-	const query = `select id, username from sys_user where username='${username}' and password='${oldPassword}'`;
+function validateUser(id, oldPassword) {
+	const query = `select username from sys_user where id='${id}' and password='${oldPassword}'`;
   	return queryOne(query);
 }
 
@@ -187,8 +186,8 @@ function findUser(username) {
   return queryOne(query);
 }
 
-// 获取用户路由信息
-function getRouteInfo(req, res, next) {
+// 修改用户信息
+function updateUserInfo(req, res, next) {
   const err = validationResult(req);
   // 如果验证错误，empty不为空
   if (!err.isEmpty()) {
@@ -197,13 +196,28 @@ function getRouteInfo(req, res, next) {
     // 抛出错误，交给我们自定义的统一异常处理程序进行错误返回 
     next(boom.badRequest(msg));
   } else {
-    let { id } = req.body;
-    const query = `select * from sys_user where username='${username}' or mobile='${username}' and password='${password}'`;
+    let { id, email, bio,nickname } = req.body;
+    const query = `update sys_user set nickname='${nickname}', email='${email}', bio='${bio}' where id = ${id}`;
+    querySql(query).then(data=>{
+      if (!data || data.length === 0) {
+        res.json({ 
+          code: CODE_ERROR, 
+          msg: '编辑失败！', 
+          data: null 
+        })
+      }else{
+        res.json({ 
+          code: CODE_SUCCESS, 
+          msg: '编辑成功！', 
+          data: null
+        })
+      }
+    })
   }
 }
 module.exports = {
   login,
   register,
-  resetPwd,
-  getRouteInfo
+  updatePassword,
+  updateUserInfo
 }
