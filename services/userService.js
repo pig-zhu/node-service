@@ -215,9 +215,50 @@ function updateUserInfo(req, res, next) {
     })
   }
 }
+
+// 查询全部用户
+function allUserList (req, res, next) { 
+  const err = validationResult(req);
+  // 如果验证错误，empty不为空
+  if (!err.isEmpty()) {
+    // 获取错误信息
+    const [{ msg }] = err.errors;
+    // 抛出错误，交给我们自定义的统一异常处理程序进行错误返回 
+    next(boom.badRequest(msg));
+  } else {
+    let { username } = req.body;
+    findUser(username).then(data => {
+      if(data){
+        const queryAll = "select id,nickname from sys_user";
+        querySql(queryAll).then(data => {
+          if (!data || data.length === 0) {
+            res.json({ 
+              code: CODE_ERROR, 
+              msg: '查询失败！', 
+              data: null 
+            })
+          }else{
+            res.json({ 
+              code: CODE_SUCCESS, 
+              msg: '查询成功！', 
+              data: data
+            })
+          }
+        })
+      }else{
+        res.json({ 
+          code: CODE_ERROR, 
+          msg: '查询失败！', 
+          data: null
+        })
+      }
+    })
+  }
+}
 module.exports = {
   login,
   register,
   updatePassword,
-  updateUserInfo
+  updateUserInfo,
+  allUserList
 }

@@ -32,7 +32,12 @@ function queryTaskList(req, res, next) {
     // pageSize = pageSize ? pageSize : 1;
     // pageNo = pageNo ? pageNo : 1;
     // status = (status || status == 0) ? status : null;
-    let query = `select * from projects where leader = ${id}`;
+    let query = null
+    if(id){
+      query = `select * from projects where leader = ${id}`;
+    }else{
+      query = 'select * from projects';
+    }
     querySql(query)
     .then(data => {
       if (!data || data.length === 0) {
@@ -125,37 +130,37 @@ function queryTaskList(req, res, next) {
   }
 }
 
-// 添加任务
+// 添加新项目
 function addTask(req, res, next) {
   const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { title, content, gmt_expire } = req.body;
-    findTask(title, 1)
+    let { name, startTime, endTime,target,description,partner_id, partner_name, isPublic, leader_id } = req.body;
+    findTask(name, 1)
     .then(task => {
       if (task) {
         res.json({ 
           code: CODE_ERROR, 
-          msg: '任务名称不能重复', 
+          msg: '项目名称不能重复', 
           data: null 
         })
       } else {
-        const query = `insert into sys_task(title, content, status, is_major, gmt_expire) values('${title}', '${content}', 0, 0, '${gmt_expire}')`;
+        const query = `insert into projects(name, start_time, end_time,target,description,partner_id,partner_name ,isPublic, leader) values('${name}', 
+        '${startTime}', '${endTime}', '${target}', '${description}', '${partner_id}', '${partner_name}', '${isPublic}', '${leader_id}')`;
         querySql(query)
         .then(data => {
-          // console.log('添加任务===', data);
           if (!data || data.length === 0) {
             res.json({ 
               code: CODE_ERROR, 
-              msg: '添加数据失败', 
+              msg: '添加项目失败', 
               data: null 
             })
           } else {
             res.json({ 
               code: CODE_SUCCESS, 
-              msg: '添加数据成功', 
+              msg: '添加项目成功', 
               data: null 
             })
           }
@@ -346,9 +351,9 @@ function deleteTask(req, res, next) {
 function findTask(param, type) {
   let query = null;
   if (type == 1) { // 1:添加类型 2:编辑或删除类型
-    query = `select id, title from sys_task where title='${param}'`;
+    query = `select id, name from projects where name='${param}'`;
   } else {
-    query = `select id, title from sys_task where id='${param}'`;
+    query = `select id, name from projects where id='${param}'`;
   }
   return queryOne(query);
 }

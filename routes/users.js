@@ -35,6 +35,9 @@ router.post('/updatePassword', service.updatePassword);
 // 修改用户信息
 router.post('/updateUserInfo', service.updateUserInfo);
 
+// 查询全部用户
+router.post('/allUserList', service.allUserList)
+
 
 module.exports = router;
 
