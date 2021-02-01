@@ -27,14 +27,18 @@ function queryTaskList(req, res, next) {
     // 抛出错误，交给我们自定义的统一异常处理程序进行错误返回 
     next(boom.badRequest(msg));
   } else {
-    let { id } = req.body;
+    let { id,name } = req.body;
     // 默认值
     // pageSize = pageSize ? pageSize : 1;
     // pageNo = pageNo ? pageNo : 1;
     // status = (status || status == 0) ? status : null;
     let query = null
     if(id){
-      query = `select * from projects where leader = ${id}`;
+      if(name){
+        query = `select * from projects where leader = ${id} and name like '%${name}%'`;
+      }else{
+        query = `select * from projects where leader = ${id}`;
+      }
     }else{
       query = 'select * from projects';
     }
@@ -44,7 +48,10 @@ function queryTaskList(req, res, next) {
         res.json({ 
         	code: CODE_ERROR, 
         	msg: '暂无数据', 
-        	data: null 
+        	data: {
+            data: [],
+            total: 0
+          } 
         })
       } else {
 
@@ -178,39 +185,34 @@ function editTask(req, res, next) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, title, content, gmt_expire } = req.body;
+    let { id, partner_name, status, partner_id } = req.body;
     findTask(id, 2)
     .then(task => {
       if (task) {
-        findTask(title, 1)
-        .then(result => {
-          if (result) {
-            res.json({ 
-              code: CODE_ERROR, 
-              msg: '任务名称不能重复', 
-              data: null 
-            })
-          } else {
-            const query = `update sys_task set title='${title}', content='${content}', gmt_expire='${gmt_expire}' where id='${id}'`;
-            querySql(query)
-            .then(data => {
-              // console.log('编辑任务===', data);
-              if (!data || data.length === 0) {
-                res.json({ 
-                  code: CODE_ERROR, 
-                  msg: '更新数据失败', 
-                  data: null 
-                })
-              } else {
-                res.json({ 
-                  code: CODE_SUCCESS, 
-                  msg: '更新数据成功', 
-                  data: null 
-                })
-              }
-            })
-          }
-        })
+        let query = null
+        if(partner_id){
+          partner_id = partner_id + ',' + task.partner_id
+          partner_name = partner_name + ',' + task.partner_name
+          query = `update projects set partner_id='${partner_id}', status='${status}', partner_name='${partner_name}' where id='${id}'`;
+        }else{
+          query = `update projects set status='${status}' where id='${id}'`;
+        }
+          querySql(query)
+          .then(data => {
+            if (!data || data.length === 0) {
+              res.json({ 
+                code: CODE_ERROR, 
+                msg: '更新数据失败', 
+                data: null 
+              })
+            } else {
+              res.json({ 
+                code: CODE_SUCCESS, 
+                msg: '更新数据成功', 
+                data: null 
+              })
+            }
+          })
       } else {
         res.json({ 
           code: CODE_ERROR, 
@@ -264,31 +266,30 @@ function updateTaskStatus(req, res, next) {
   }
 }
 
-// 点亮红星标记
-function updateMark(req, res, next) {
+// 订阅报警
+function alarms(req, res, next) {
   const err = validationResult(req);
   if (!err.isEmpty()) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, is_major } = req.body;
+    let { id, content, type,userId,createTime } = req.body;
     findTask(id, 2)
     .then(task => {
       if (task) {
-        const query = `update sys_task set is_major='${is_major}' where id='${id}'`;
+        const query = `insert into sys_message(type, content, create_user, create_time) values('${type}', '${content}', '${userId}', '${createTime}')`;
         querySql(query)
         .then(data => {
-          // console.log('点亮红星标记===', data);
           if (!data || data.length === 0) {
             res.json({ 
               code: CODE_ERROR, 
-              msg: '操作数据失败', 
+              msg: '操作失败', 
               data: null 
             })
           } else {
             res.json({ 
               code: CODE_SUCCESS, 
-              msg: '操作数据成功', 
+              msg: '操作成功', 
               data: null 
             })
           }
@@ -312,12 +313,9 @@ function deleteTask(req, res, next) {
     const [{ msg }] = err.errors;
     next(boom.badRequest(msg));
   } else {
-    let { id, status } = req.body;
-    findTask(id, 2)
-    .then(task => {
-      if (task) {
-        const query = `update sys_task set status='${status}' where id='${id}'`;
-        // const query = `delete from sys_task where id='${id}'`;
+    let { id } = req.body;
+    let ids = id.split(',')
+        const query = `delete from projects where id in (${ids})`;
         querySql(query)
         .then(data => {
           // console.log('删除任务===', data);
@@ -335,15 +333,6 @@ function deleteTask(req, res, next) {
             })
           }
         })
-      } else {
-        res.json({ 
-          code: CODE_ERROR, 
-          msg: '数据不存在', 
-          data: null 
-        })
-      }
-    })
-
   }
 }
 
@@ -353,17 +342,42 @@ function findTask(param, type) {
   if (type == 1) { // 1:添加类型 2:编辑或删除类型
     query = `select id, name from projects where name='${param}'`;
   } else {
-    query = `select id, name from projects where id='${param}'`;
+    query = `select id, name, partner_name, partner_id from projects where id='${param}'`;
   }
   return queryOne(query);
 }
-
+// 获取团队列表
+function teamList (req, res, next) {
+  const err = validationResult(req);
+  if (!err.isEmpty()) {
+    const [{ msg }] = err.errors;
+    next(boom.badRequest(msg));
+  }else{
+    const query = 'select * from teams'
+    querySql(query).then(data => {
+      if(data && data.length>0){
+        res.json({ 
+          code: CODE_SUCCESS, 
+          msg: '获取列表成功！', 
+          data: data 
+        })
+      }else{
+        res.json({ 
+          code: CODE_ERROR, 
+          msg: '获取列表失败！', 
+          data: null 
+        })
+      }
+    })
+  }
+}
 
 module.exports = {
   queryTaskList,
   addTask,
   editTask,
   updateTaskStatus,
-  updateMark,
-  deleteTask
+  alarms,
+  deleteTask,
+  teamList
 }

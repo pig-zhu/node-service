@@ -16,17 +16,19 @@ router.post('/queryTaskList', service.queryTaskList);
 router.post('/addTask', service.addTask);
 
 // 编辑任务接口
-router.put('/editTask', service.editTask);
+router.post('/editTask', service.editTask);
 
 // 操作任务状态接口
 router.put('/updateTaskStatus', service.updateTaskStatus);
 
-// 点亮红星标记接口
-router.put('/updateMark', service.updateMark);
+// 订阅报警
+router.post('/alarms', service.alarms);
 
 // 删除任务接口
-router.delete('/deleteTask', service.deleteTask);
+router.post('/delProject', service.deleteTask);
 
+// 获取团队列表
+router.get('/teamList', service.teamList)
 
 module.exports = router;
 

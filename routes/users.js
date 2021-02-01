@@ -38,6 +38,7 @@ router.post('/updateUserInfo', service.updateUserInfo);
 // 查询全部用户
 router.post('/allUserList', service.allUserList)
 
-
+// 查询消息
+router.post('/activity', service.activity)
 module.exports = router;
 

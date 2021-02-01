@@ -11,17 +11,19 @@ const routes = require('./routes'); //导入自定义路由文件，创建模块
 const app = express();
 const ws = require("nodejs-websocket");
 console.log("开始建立连接...")
-var connection1 = null, connection1Ready = false;
+global.connections = []
+global.current_server = null
 var server = ws.createServer(function(conn){
+    global.connections.push(conn)
     conn.on("text", function (str) {
-        console.log("收到的信息为:"+str)
-        if(str==="connection1"){
-            connection1 = conn;
-			connection1Ready = true;
-            conn.sendText("success");
+        global.current_server = conn
+        if( '我发的' == str){
+            global.connections.forEach(element => {
+                if(element != global.current_server){
+                  element.send('收到了！')
+                }
+              });
         }
-
-        conn.sendText(str)
 	})
     conn.on("close", function (code, reason) {
         console.log("关闭连接")
