@@ -33,7 +33,7 @@ function login(req, res, next) {
     // md5加密
     // password = md5(password); 
     console.log(password, 'login')
-    const query = `select * from sys_user where username='${username}' or mobile='${username}' and password='${password}'`;
+    const query = `select * from sys_user where (username='${username}' or mobile='${username}') and password='${password}'`;
     querySql(query)
       .then(user => {
         if (!user || user.length === 0) {

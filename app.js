@@ -14,15 +14,28 @@ console.log("开始建立连接...")
 global.connections = []
 global.current_server = null
 var server = ws.createServer(function(conn){
-    global.connections.push(conn)
     conn.on("text", function (str) {
-        global.current_server = conn
-        if( '我发的' == str){
-            global.connections.forEach(element => {
-                if(element != global.current_server){
-                  element.send('收到了！')
-                }
-              });
+        let idIndex = str.indexOf('id:')
+        let id = str.slice(idIndex + 3)
+        if(str.includes('首次连接')){
+            global.connections.push({
+                id: id,
+                server: conn
+            })
+        } else if (str.includes('close')) {
+            let item = global.connections.find(ele => ele.id === code)
+            if (item) {
+                let index = global.connections.indexOf(item)
+                global.connections.splice(index, 1)
+            }
+        } else {
+            let item = global.connections.filter(ele => ele.id !== id)
+            if (item.length) {
+                let msg = str.slice(0, idIndex-1)
+                item.forEach(ele => {
+                    ele.server.send(msg)
+                })
+            }
         }
 	})
     conn.on("close", function (code, reason) {
